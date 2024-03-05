@@ -39,7 +39,49 @@ def read_uint16(game, start_addr):
     '''Read 2 bytes'''
     val_256 = game.get_memory_value(start_addr)
     val_1 = game.get_memory_value(start_addr + 1)
-    return 256*val_256 + val_1
+    return 256 * val_256 + val_1
+
+def pokemon(game):
+    # Get memory values from the list POKE and LEVEL
+    memory_values = [game.get_memory_value(a) for a in POKE]
+    levels = [game.get_memory_value(a) for a in LEVEL]
+
+    # Use memory values to get corresponding names from pokemon_data
+    names = [entry['name'] for entry in data.pokemon_data if entry.get('decimal') and int(entry['decimal']) in memory_values]
+
+    # Create an initial dictionary with names as keys and levels as values
+    party_dict = dict(zip(names, levels))
+
+    return party_dict
+
+def update_pokemon_level(pokemon_dict, pokemon_name, new_level):
+    if pokemon_name in pokemon_dict:
+        # Update the level for the specified Pokémon
+        pokemon_dict[pokemon_name] = new_level
+    else:
+        # Add a new entry for the Pokémon
+        pokemon_dict[pokemon_name] = new_level
+
+def get_hm_count(game):
+    hm_ids = [0xC4, 0xC5, 0xC6, 0xC7, 0xC8]
+    items = get_items_in_bag(game)
+    total_hm_cnt = 0
+    for hm_id in hm_ids:
+        if hm_id in items:
+            total_hm_cnt += 1
+    return total_hm_cnt
+
+def get_items_in_bag(game, one_indexed=0):
+    first_item = 0xD31E
+    item_names = []
+    for i in range(0, 20, 2):
+        item_id = game.get_memory_value(first_item + i)
+        if item_id == 0 or item_id == 0xff:
+            break
+        item_id_key = item_id + one_indexed
+        item_name = data.items_dict.get(item_id_key, {}).get('Item', f'Unknown Item {item_id_key}')
+        item_names.append(item_name)
+    return item_names
 
 def position(game):
     r_pos = game.get_memory_value(Y_POS_ADDR)

@@ -180,6 +180,21 @@ class Environment(Base):
         # Badge reward
         badges = ram_map.badges(self.game)
         badges_reward = 5 * badges
+                
+        # Save Bill
+        bill_state = ram_map.saved_bill(self.game)
+        bill_reward = 10 * bill_state
+        
+        # SS Anne appeared
+        ss_anne_state = ram_map.ss_anne_appeared(self.game)
+        if ss_anne_state:
+            ss_anne_state_reward = 5
+        else:
+            ss_anne_state_reward = 0
+    
+        # HM reward
+        hm_count = ram_map.get_hm_count(self.game)
+        hm_reward = hm_count * 5
 
         # Event reward
         events = ram_map.events(self.game)
@@ -205,6 +220,20 @@ class Environment(Base):
         info = {}
         done = self.time >= self.max_episode_steps
         if done:
+            # pokemon_info = data.pokemon_l(self.game)
+            # x, y ,map_n = ram_map.position(self.game)
+            # items = ram_map.get_items_in_bag()
+            # reset = self.reset_count
+            # pokemon = []
+            # for p in pokemon_info:
+            #     pokemon.append({
+            #         'env_id': self.env_id,
+            #         'slot': p['slot'],
+            #         'name': p['name'],
+            #         'level': p['level'],
+            #         'moves': p['moves'],
+            #         'items': items,
+            #     })
             info = {
                 'reward': {
                     'delta': reward,
@@ -216,31 +245,24 @@ class Environment(Base):
                     'healing': healing_reward,
                     'exploration': exploration_reward,
                 },
-                'maps_explored': len(self.seen_maps),
-                'party_size': party_size,
-                'highest_pokemon_level': max(party_levels),
-                'total_party_level': sum(party_levels),
-                'deaths': self.death_count,
-                'badge_1': float(badges == 1),
-                'badge_2': float(badges > 1),
-                'event': events,
-                'money': money,
-                'pokemon_exploration_map': self.counts_map,
-            }
-
-        if self.verbose:
-            print(
-                f'steps: {self.time}',
-                f'exploration reward: {exploration_reward}',
-                f'level_Reward: {level_reward}',
-                f'healing: {healing_reward}',
-                f'death: {death_reward}',
-                f'op_level: {opponent_level_reward}',
-                f'badges reward: {badges_reward}',
-                f'event reward: {event_reward}',
-                f'money: {money}',
-                f'ai reward: {reward}',
-                f'Info: {info}',
-            )
-
-        return self.render()[::2, ::2], reward, done, done, info
+                "maps_explored": np.sum(self.seen_maps),
+                "party_size": party_size,
+                "highest_pokemon_level": max(party_levels),
+                "total_party_level": sum(party_levels),
+                "deaths": self.death_count,
+                "bill_saved": bill_state,
+                "hm_count": hm_count,
+                "ss_anne_state": ss_anne_state,
+                "badge_1": float(badges >= 1),
+                "badge_2": float(badges >= 2),
+                "event": events,
+                "money": money,
+                "pokemon_exploration_map": self.counts_map,
+                "seen_npcs_count": len(self.seen_npcs),
+                "seen_pokemon": sum(self.seen_pokemon),
+                "caught_pokemon": sum(self.caught_pokemon),
+                "moves_obtained": sum(self.moves_obtained),
+                "hidden_obj_count": len(self.seen_hidden_objs),
+                # "logging": pokemon,
+            }     
+        return self.render(), reward, done, done, info
